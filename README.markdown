@@ -1,11 +1,10 @@
 About This Fork
 =======
 
-Seelog is a powerful and easy-to-learn logging framework that provides functionality for flexible dispatching, filtering, and formatting log messages.
-It is natively written in the [Go](http://golang.org/) programming language.
-The original source tree can be found at (https://github.com/cihub/seelog).
-
 This fork inhances original seelog with a wrapper to simulate the golang's default log behavior.
+
+The original source tree can be found at here(https://github.com/cihub/seelog).
+
 
 Quick-start
 -----------
