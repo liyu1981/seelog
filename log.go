@@ -32,9 +32,35 @@ import (
 )
 
 const (
-	staticFuncCallDepth = 3 // See 'commonLogger.log' method comments
+	//staticFuncCallDepth = 3 // See 'commonLogger.log' method comments
 	loggerFuncCallDepth = 3
 )
+
+/* Make staticFuncCallDepth a package variable rather than constant to enable
+   further wrapper to print right context info.
+
+   Seelog relies on staticFuncCallDepth to query the right Caller information
+   (see common_context.go:110 & 68 for details). This was hard coded as
+   constant, which does not allow us to further wrap the seelog's API. As we can
+   not change the staticFuncCallDepth, we can not make common_context query for
+   the right frame of our calling stack.
+
+   Detail usage please check seelogWrapper/log.go.
+
+   -- liyu
+ */
+
+var staticFuncCallDepth int
+
+func GetStaticFuncCallDepth() int {
+  return staticFuncCallDepth
+}
+
+func SetStaticFuncCallDepth(v int) int {
+  old := staticFuncCallDepth
+  staticFuncCallDepth = v
+  return old
+}
 
 // Current is the logger used in all package level convenience funcs like 'Trace', 'Debug', 'Flush', etc.
 var Current LoggerInterface
@@ -42,7 +68,6 @@ var Current LoggerInterface
 // Default logger that is created from an empty config: "<seelog/>". It is not closed by a ReplaceLogger call.
 var Default LoggerInterface
 
-// Disabled logger that doesn't produce any output in any circumstances. It is neither closed nor flushed by a ReplaceLogger call.
 var Disabled LoggerInterface
 
 var pkgOperationsMutex *sync.Mutex
@@ -114,12 +139,12 @@ func createLoggerFromConfig(config *logConfig) (LoggerInterface, error) {
 	return nil, errors.New("Invalid config log type/data")
 }
 
-// UseLogger sets the 'Current' package level logger variable to the specified value. 
+// UseLogger sets the 'Current' package level logger variable to the specified value.
 // This variable is used in all Trace/Debug/... package level convenience funcs.
-// 
-// Example: 
 //
-// after calling 
+// Example:
+//
+// after calling
 //     seelog.UseLogger(somelogger)
 // the following:
 //     seelog.Debug("abc")
@@ -154,18 +179,18 @@ func UseLogger(logger LoggerInterface) error {
 //
 // Example:
 //     import log "github.com/cihub/seelog"
-//     
+//
 //     func main() {
 //         logger, err := log.LoggerFromConfigAsFile("seelog.xml")
-//     
+//
 //         if err != nil {
 //             panic(err)
 //         }
-//     
+//
 //         log.ReplaceLogger(logger)
 //         defer log.Flush()
-//     
-//         log.Trace("test") 
+//
+//         log.Trace("test")
 //         log.Debugf("var = %s", "abc")
 //     }
 func ReplaceLogger(logger LoggerInterface) error {
@@ -282,7 +307,7 @@ func Critical(v ...interface{}) {
 }
 
 // Flush immediately processes all currently queued messages and all currently buffered messages.
-// It is a blocking call which returns only after the queue is empty and all the buffers are empty. 
+// It is a blocking call which returns only after the queue is empty and all the buffers are empty.
 //
 // If Flush is called for a synchronous logger (type='sync'), it only flushes buffers (e.g. '<buffered>' receivers)
 // , because there is no queue.
